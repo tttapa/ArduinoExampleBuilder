@@ -1,5 +1,14 @@
 #pragma once
 
+#include <cassert>
+#include <chrono>
+#include <cstdio>
+#include <future>
+#include <iostream>
+#include <memory>
+#include <optional>
+#include <vector>
+
 template <class Job>
 class JobServer {
   public:
@@ -16,7 +25,7 @@ class JobServer {
     }
 #else
     template <class... Args>
-    void schedule(Args&&... args) {
+    void schedule(Args &&... args) {
         std::cout << __PRETTY_FUNCTION__ << std::endl;
         assert(!started);
         this->jobs.emplace_back(std::forward<Args>(args)...);
@@ -53,10 +62,17 @@ class JobServer {
             for (auto &fut : queue) {
                 if (fut.valid() == false || // uninitialized
                     fut.wait_for(10ms) == std::future_status::ready) {
-                    finishedJob = fut.valid() ? &(fut.get()) : nullptr;
-                    Job &job = jobs[nextToLaunch++];
-                    auto launch = [&job]() -> Job & {
-                        job.run();
+                    finishedJob = fut.valid() ? fut.get() : nullptr;
+                    Job *job = &jobs[nextToLaunch++];
+                    size_t nextToLaunchCopy = nextToLaunch;
+                    size_t numJobs = jobs.size();
+                    auto launch = [job, nextToLaunchCopy, numJobs]() -> Job * {
+                        LockedYellow(std::cout, cout_mutex)
+                            << "lambda: starting job " << nextToLaunchCopy
+                            << " of " << numJobs << std::endl;
+                        job->run();
+                        LockedYellow(std::cout, cout_mutex)
+                            << "lambda: job done" << std::endl;
                         return job;
                     };
                     fut = std::async(std::launch::async, launch);
@@ -66,16 +82,32 @@ class JobServer {
         } else {
             finished = true;
             for (auto &fut : queue) {
-                if (fut.wait_for(10ms) == std::future_status::ready) {
-                    finishedJob = fut.valid() ? &(fut.get()) : nullptr;
+                if (fut.valid() == false) {
+                    // finished, or not launched
+                } else if (fut.wait_for(10ms) == std::future_status::ready) {
+                    finishedJob = fut.get();
+                    finished = false;
+                    LockedRed(std::cout, cout_mutex)
+                        << (fut.valid() ? "true" : "false") << std::endl;
                     break; // for
                 } else {
+                    // still running
                     finished = false;
                 }
             }
         }
-        if (finishedJob)
-            return std::move(*finishedJob);
+        if (finished) {
+            LockedYellowB(std::cout, cout_mutex) << "FINISHED" << std::endl;
+        }
+        if (finishedJob) {
+            LockedYellow(std::cout, cout_mutex)
+                << "JobServer::run: returning job " << finishedJob->getSketch()
+                << std::endl
+                << "finishedJob - &jobs[0] = " << (finishedJob - &jobs[0])
+                << std::endl;
+            Job finishedJobRet = std::move(*finishedJob);
+            return finishedJobRet;
+        }
         return std::nullopt;
     }
 
@@ -83,7 +115,7 @@ class JobServer {
     bool isStarted() const { return started; }
 
   private:
-    std::vector<std::future<Job &>> queue;
+    std::vector<std::future<Job *>> queue;
     std::vector<Job> jobs;
     size_t nextToLaunch = 0;
     bool started = false;

@@ -41,6 +41,16 @@
         "typeinfo": "cpp",
         "utility": "cpp",
         "cmath": "cpp",
-        "string_view": "cpp"
-    }
+        "string_view": "cpp",
+        "cstdarg": "cpp",
+        "codecvt": "cpp",
+        "cstddef": "cpp",
+        "cstring": "cpp",
+        "deque": "cpp",
+        "filesystem": "cpp",
+        "numeric": "cpp",
+        "variant": "cpp"
+    },
+    "C_Cpp.default.cppStandard": "c++17",
+    "terminal.integrated.cwd": "build"
 }
