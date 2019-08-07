@@ -59,6 +59,11 @@ class LockedColor {
 
 extern std::mutex cout_mutex;
 
+class WhiteB : public Color {
+  public:
+    WhiteB(std::ostream &os) : Color(os, ANSIColors::whiteb) {}
+};
+
 class Green : public Color {
   public:
     Green(std::ostream &os) : Color(os, ANSIColors::green) {}

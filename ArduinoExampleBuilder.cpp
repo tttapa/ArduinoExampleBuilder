@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <fmt/format.h>
 #include <fstream>
+#include <iomanip>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -54,13 +55,13 @@ std::string &rtrim(std::string &str) {
     return str;
 }
 
-class ostream_lock {
+class LockedOStream {
   private:
     std::ostream &os;
     std::lock_guard<std::mutex> lock;
 
   public:
-    ostream_lock(std::ostream &os, std::mutex mutex) : os(os), lock{mutex} {}
+    LockedOStream(std::ostream &os, std::mutex &mutex) : os(os), lock{mutex} {}
     template <class T>
     std::ostream &operator<<(T &&t) const {
         return os << t;
@@ -86,30 +87,52 @@ class ArduinoBuildJob {
 int main() {
     JobServer<ArduinoBuildJob> js = 8;
 
-    js.schedule("/home/pieter/GitHub/Control-Surface/examples/1. MIDI "
-                "Output/2. Buttons & Switches/1. Momentary Push "
-                "Buttons/NoteButton/NoteButton.ino");
-    js.schedule("/home/pieter/GitHub/Control-Surface/examples/1. MIDI "
-                "Output/2. Buttons & Switches/1. Momentary Push "
-                "Buttons/NoteButton2/NoteButton2.ino");
-    js.schedule("/home/pieter/GitHub/Control-Surface/examples/1. MIDI "
-                "Output/2. Buttons & Switches/1. Momentary Push "
-                "Buttons/NoteButton3/NoteButton3.ino");
-    js.schedule("/home/pieter/GitHub/Control-Surface/examples/1. MIDI "
-                "Output/2. Buttons & Switches/1. Momentary Push "
-                "Buttons/NoteButton4/NoteButton4.ino");
-    js.schedule(
-        "/home/pieter/GitHub/Control-Surface/examples/1. MIDI Output/2. "
-        "Buttons & Switches/4. Push Buttons to Increment or Decrement Controls "
-        "and to Scroll through "
-        "Lists/CCIncrementDecrementButtons/CCIncrementDecrementButtons.ino");
+    for (auto &p : fs::recursive_directory_iterator(fs::current_path())) {
+        if (p.path().extension() == ".ino")
+            js.schedule(p.path());
+    }
+
+    size_t successfulJobs = 0;
+    std::vector<ArduinoBuildJob> failedJobs;
 
     while (!js.isFinished()) {
         if (auto finishedJob = js.run()) {
-            LockedBlue(std::cout, cout_mutex)
-                << finishedJob->getResult().output << std::endl;
+            auto result = finishedJob->getResult();
+            if (result.status == 0)
+                ++successfulJobs;
+            else
+                failedJobs.emplace_back(std::move(*finishedJob));
         }
     }
+
+    if (failedJobs.size() == 0) {
+        GreenB(std::cout)
+            << "\n"
+            << " ╔═══════════════════════════════════════════════╗\n"
+            << " ║    All " << std::setfill(' ') << std::setw(3)
+            << successfulJobs << " examples built successfully!  ✔    ║\n"
+            << " ╚═══════════════════════════════════════════════╝\n"
+            << std::endl;
+    } else {
+        RedB(std::cout)
+            << "\n"
+            << " ╔═══════════════════════════════════════════════╗\n"
+            << " ║     " << std::setfill(' ') << std::setw(3)
+            << failedJobs.size() << " of " << std::setw(3)
+            << (failedJobs.size() + successfulJobs)
+            << " examples failed to build.      ║\n"
+            << " ╚═══════════════════════════════════════════════╝\n"
+            << std::endl;
+        for (auto &failedJob : failedJobs) {
+            WhiteB(std::cout)
+                << "Sketch: " << failedJob.getSketch() << "\n"
+                << "Status: " << failedJob.getResult().status << "\n"
+                << "Output: \n";
+            std::cout << failedJob.getResult().output << std::endl;
+        }
+    }
+
+    return failedJobs.size();
 }
 
 void ArduinoBuildJob::run() {
@@ -165,7 +188,10 @@ void ArduinoBuildJob::run() {
                     // "cachedir"_a = cachedir.string(),           //
                     "file"_a = sketch.filename().string());
 
-    std::cout << cmd << std::endl;
+    bool printCommands = false;
+    if (printCommands) {
+        LockedOStream(std::cout, cout_mutex) << cmd << std::endl;
+    }
 
     result = exec(cmd);
 
@@ -176,5 +202,4 @@ void ArduinoBuildJob::run() {
         LockedRedB(std::cout, cout_mutex)
             << "Builing " << sketch.filename() << " failed!" << std::endl;
     }
-    LockedYellow(std::cout, cout_mutex) << sketch << std::endl;
 }
