@@ -8,8 +8,10 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/bin/arduino-example-builder",
-            "args": ["--help"],
+            "program": "${workspaceFolder}/build/debug/bin/arduino-example-builder",
+            "args": [
+                "--help"
+            ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
