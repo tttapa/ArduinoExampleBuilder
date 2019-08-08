@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/bin/arduino-example-builder",
-            "args": [],
+            "args": ["--help"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

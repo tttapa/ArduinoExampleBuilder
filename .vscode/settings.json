@@ -51,7 +51,9 @@
         "numeric": "cpp",
         "variant": "cpp",
         "iomanip": "cpp",
-        "cassert": "cpp"
+        "cassert": "cpp",
+        "bitset": "cpp",
+        "cinttypes": "cpp"
     },
     "C_Cpp.default.cppStandard": "c++17",
     "terminal.integrated.cwd": "build"

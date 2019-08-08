@@ -57,7 +57,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
     -fdiagnostics-show-option -Wsuggest-override \
     -Wdouble-promotion \
     -Wswitch-enum -Wimplicit-fallthrough=3 \
-    -Wstrict-overflow=5 \
     -Wuninitialized \
     -pedantic -pedantic-errors")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} \
@@ -84,6 +83,12 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} \
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
+
+################################################################################
+# Find OpenSSL
+################################################################################
+
+find_package(OpenSSL REQUIRED)
 
 ################################################################################
 # Add {fmt} library 
