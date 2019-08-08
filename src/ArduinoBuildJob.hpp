@@ -27,6 +27,7 @@ class ArduinoBuildJob {
 
     const ExecResult &getResult() const { return result; }
     const fs::path &getSketch() const { return sketch; }
+    const std::string &getBoard() const { return board; }
 
     static std::vector<std::string> getBoards(const fs::path &sketch);
 

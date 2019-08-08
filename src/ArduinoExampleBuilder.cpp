@@ -16,8 +16,7 @@ class ArgMatcher {
   public:
     ArgMatcher(std::string flag, std::string abbr, int nb_arguments,
                std::string docstr)
-        : flag(flag), abbr(abbr), nb_arguments(nb_arguments),
-          docstr("  --" + flag + "\n   -" + abbr + "\n    " + docstr + "\n") {
+        : flag(flag), abbr(abbr), nb_arguments(nb_arguments), docstr(docstr) {
         matchers.insert(matchers.end(), this);
     }
 
@@ -57,6 +56,20 @@ class ArgMatcher {
         return arguments.size() == 0 ? defaultval : T(arguments[0]);
     }
 
+    std::string getDocStr() const {
+        std::string docstr = "";
+        if (!flag.empty())
+            docstr += "  --" + flag;
+        if (!flag.empty() && !abbr.empty())
+            docstr += ", ";
+        else
+            docstr += "  ";
+        if (!abbr.empty())
+            docstr += "-" + abbr;
+        docstr += "\n    " + this->docstr + "\n";
+        return docstr;
+    }
+
     std::string flag;
     std::string abbr;
     int nb_arguments;
@@ -86,7 +99,7 @@ class ArgMatcher {
     static std::string getHelp() {
         std::string help = "";
         for (ArgMatcher *matcher : matchers)
-            help += matcher->docstr + "\n";
+            help += matcher->getDocStr() + "\n";
         return help;
     }
 };
@@ -97,6 +110,7 @@ void printJobs(const std::vector<ArduinoBuildJob> &jobs) {
     for (auto &job : jobs) {
         WhiteB(std::cout) << "\n"
                           << "Sketch: " << job.getSketch() << "\n"
+                          << "Board: " << job.getBoard() << "\n"
                           << "Status: " << job.getResult().status << "\n"
                           << "Output: \n\n";
         std::cout << job.getResult().output << std::endl;
@@ -135,12 +149,10 @@ int main_application(int argc, const char *argv[]) {
     ArgMatcher args = {
         "args", "a", 0,
         "The arguments to pass to arduino-builder.\n    This should be the "
-        "last "
-        "argument, all arguments after it will be passed directly to "
+        "last argument, all arguments after it will be passed\n    directly to "
         "arduino-builder.\n    If specified, no default settings will be "
-        "passed to "
-        "arduino-builder, just the sketch to compile and the fully qualified "
-        "board name."};
+        "passed to arduino-builder,\n    just the sketch to compile and the "
+        "fully qualified board name."};
 
     // Parse command line arguments
     Options options;
