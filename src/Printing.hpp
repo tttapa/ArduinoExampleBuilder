@@ -23,7 +23,7 @@ constexpr const char *whiteb = "\x1b[37;1m";   ///< White bold
 
 } // namespace ANSIColors
 
-#include <ostream>
+#include <iostream>
 
 class Color {
   private:
@@ -37,31 +37,6 @@ class Color {
     std::ostream &operator<<(T &&t) const {
         return os << color << t;
     }
-};
-
-#include <mutex>
-
-class LockedColor {
-  private:
-    std::ostream &os;
-    const char *color;
-    std::lock_guard<std::mutex> lock;
-
-  public:
-    LockedColor(std::ostream &os, std::mutex &mutex, const char *color)
-        : os(os), color(color), lock(mutex) {}
-    ~LockedColor() { os << ANSIColors::reset << std::flush; }
-    template <class T>
-    std::ostream &operator<<(T &&t) const {
-        return os << color << t;
-    }
-};
-
-extern std::mutex cout_mutex;
-
-class WhiteB : public Color {
-  public:
-    WhiteB(std::ostream &os) : Color(os, ANSIColors::whiteb) {}
 };
 
 class Green : public Color {
@@ -103,6 +78,44 @@ class RedB : public Color {
   public:
     RedB(std::ostream &os) : Color(os, ANSIColors::redb) {}
 };
+
+class WhiteB : public Color {
+  public:
+    WhiteB(std::ostream &os) : Color(os, ANSIColors::whiteb) {}
+};
+
+#include <mutex>
+
+class LockedOStream {
+  private:
+    std::ostream &os;
+    std::lock_guard<std::mutex> lock;
+
+  public:
+    LockedOStream(std::ostream &os, std::mutex &mutex) : os(os), lock{mutex} {}
+    template <class T>
+    std::ostream &operator<<(T &&t) const {
+        return os << t;
+    }
+};
+
+class LockedColor {
+  private:
+    std::ostream &os;
+    const char *color;
+    std::lock_guard<std::mutex> lock;
+
+  public:
+    LockedColor(std::ostream &os, std::mutex &mutex, const char *color)
+        : os(os), color(color), lock(mutex) {}
+    ~LockedColor() { os << ANSIColors::reset << std::flush; }
+    template <class T>
+    std::ostream &operator<<(T &&t) const {
+        return os << color << t;
+    }
+};
+
+extern std::mutex cout_mutex;
 
 class LockedGreen : public LockedColor {
   public:

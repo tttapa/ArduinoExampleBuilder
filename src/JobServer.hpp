@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cassert>
 #include <chrono>
 #include <cstdio>
 #include <future>
@@ -9,10 +8,12 @@
 #include <optional>
 #include <vector>
 
+#include <Printing.hpp>
+
 template <class Job>
 class JobServer {
   public:
-    JobServer(size_t threads = 1) : futures(threads) { jobs.reserve(10); }
+    JobServer(unsigned int threads = 1) : futures(threads) { jobs.reserve(10); }
 
     template <class... Args>
     void schedule(Args &&... args) {
@@ -50,7 +51,7 @@ class JobServer {
                         job->run();
                         return job;
                     };
-                    
+
                     size_t progress = nextToLaunch;
                     size_t total = jobs.size();
                     LockedBlue(std::cout, cout_mutex)
