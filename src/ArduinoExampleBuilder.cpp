@@ -284,7 +284,7 @@ int main_application(int argc, const char *argv[]) {
 
 int main(int argc, const char *argv[]) {
     try {
-        main_application(argc, argv);
+        return main_application(argc, argv);
     } catch (std::exception &e) {
         std::cerr << e.what() << std::endl;
         exit(2);
