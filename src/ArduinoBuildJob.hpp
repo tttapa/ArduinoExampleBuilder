@@ -25,6 +25,7 @@ class ArduinoBuildJob {
 
     void run();
 
+    bool getSkipped() const { return skipped; }
     const ExecResult &getResult() const { return result; }
     const fs::path &getSketch() const { return sketch; }
     const std::string &getBoard() const { return board; }
@@ -44,4 +45,5 @@ class ArduinoBuildJob {
     fs::path sketch;
     std::string board;
     ExecResult result;
+    bool skipped = false;
 };

@@ -117,6 +117,14 @@ void printJobs(const std::vector<ArduinoBuildJob> &jobs) {
     }
 }
 
+void printSkippedJobs(const std::vector<ArduinoBuildJob> &jobs) {
+    for (auto &job : jobs) {
+        std::cout << "\n"
+                  << "Sketch: " << job.getSketch() << "\n"
+                  << "Board: " << job.getBoard() << std::endl;
+    }
+}
+
 int main_application(int argc, const char *argv[]) {
     auto starttime = std::chrono::steady_clock::now();
 
@@ -232,10 +240,14 @@ int main_application(int argc, const char *argv[]) {
     size_t numberSuccessfulJobs = 0;
     std::vector<ArduinoBuildJob> failedJobs;
     std::vector<ArduinoBuildJob> successfulJobs;
+    std::vector<ArduinoBuildJob> skippedJobs;
     while (!js.isFinished()) {
         if (auto finishedJob = js.run()) {
             auto result = finishedJob->getResult();
-            if (result.status == 0) {
+            bool skipped = finishedJob->getSkipped();
+            if (skipped) {
+                skippedJobs.emplace_back(std::move(*finishedJob));
+            } else if (result.status == 0) {
                 ++numberSuccessfulJobs;
                 if (printsuccessful.matched)
                     successfulJobs.emplace_back(std::move(*finishedJob));
@@ -250,8 +262,17 @@ int main_application(int argc, const char *argv[]) {
         Red(std::cerr) << "Error: no examples were found" << std::endl;
         exit(42);
     }
-    if (printsuccessful.matched)
+
+    if (printsuccessful.matched) {
         printJobs(successfulJobs);
+    }
+
+    if (!skippedJobs.empty()) {
+        YellowB(std::cout) << "\n"
+                           << "The following examples were skipped: \n";
+        printSkippedJobs(skippedJobs);
+    }
+
     if (failedJobs.size() == 0) {
         GreenB(std::cout)
             << "\n"

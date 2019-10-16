@@ -17,6 +17,14 @@ ArduinoBuildJob::ArduinoBuildJob(fs::path sketch, std::string board)
 
 /// Build the sketch for the given board
 void ArduinoBuildJob::run() {
+    if (boardOptions[tolower_copy(board)] == "skip") {
+        LockedYellow(std::cout, cout_mutex)
+            << "Skipped " << sketch.filename() << " for board " << board << "."
+            << std::endl;
+        skipped = true;
+        return;
+    }
+
     using namespace fmt::literals;
 
     LockedBlueB(std::cout, cout_mutex)
