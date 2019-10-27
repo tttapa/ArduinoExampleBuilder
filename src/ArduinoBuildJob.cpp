@@ -36,9 +36,12 @@ void ArduinoBuildJob::run() {
 
     std::string hash = md5(sketch.string() + board);
     fs::path tmpsketchfolder = cachedir / hash;
-    fs::path tmpsketch = tmpsketchfolder / (hash + ".ino");
+    fs::path tmpsketch = tmpsketchfolder / sketch.filename();
+    fs::path tmpsketchhash = tmpsketchfolder / (hash + ".ino");
     fs::create_directories(tmpsketchfolder);
-    fs::copy_file(sketch, tmpsketch, fs::copy_options::update_existing);
+    fs::copy(sketch.parent_path(), tmpsketchfolder,
+             fs::copy_options::update_existing | fs::copy_options::recursive);
+    fs::rename(tmpsketch, tmpsketchhash);
 
     std::string cmd = //
         fmt::format("cd \"{folder}\" && "
@@ -52,7 +55,7 @@ void ArduinoBuildJob::run() {
                     "command"_a = command,                        //
                     "fqbn"_a = boardOptions[tolower_copy(board)], //
                     "cachedir"_a = boardCachedir.string(),        //
-                    "file"_a = tmpsketch.string());
+                    "file"_a = tmpsketchhash.string());
 
     if (verbose) {
         LockedOStream(std::cout, cout_mutex) << cmd << std::endl;
