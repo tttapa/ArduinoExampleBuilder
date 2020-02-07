@@ -12,7 +12,7 @@ target_include_directories(arduino-example-builder
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 target_link_libraries(arduino-example-builder 
-    Threads::Threads fmt::fmt OpenSSL::SSL)
+    Threads::Threads fmt::fmt OpenSSL::SSL stdc++fs)
 
 install (TARGETS arduino-example-builder DESTINATION bin)
 install (FILES ../board-options/board-options.txt 
